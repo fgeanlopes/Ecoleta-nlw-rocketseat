@@ -27,6 +27,9 @@ routes.post('/points', async (req, res)=>{
     uf,
     items
   } = req.body;
+
+  // const name = req.body.name;
+
   await knex("points").insert({
     image: "image-fake",
     name,
@@ -36,17 +39,8 @@ routes.post('/points', async (req, res)=>{
     longitude,
     city,
     uf
-
-    // image: "image-fake",
-    // name:"gean",
-    // email: "f.geanlopes@gmail.com",
-    // whatsapp: "1954156156",
-    // latitude: "51616156",
-    // longitude: "89451",
-    // city: "americana",
-    // uf: "ssp",
   });
-  return res.json({sucess:true})
+  return res.json({sucess:true});
 });
 
 export default routes;
