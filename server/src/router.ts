@@ -1,25 +1,17 @@
 import express from "express";
-import knex from './database/connection';
 import PointsController from './controllers/PointsController';
+import ItemsController from './controllers/ItemsController';
 
 const routes = express.Router();
 
 const pointsController = new PointsController();
+const itemsController = new ItemsController();
 
-routes.get('/items', async (req, res) => {
-    const items = await knex('items').select('*');
+routes.get("/items", itemsController.index);
+routes.post('/points', pointsController.create);
+routes.get('/points/:id', pointsController.show);
 
-    const serializedItems = items.map(item =>{
-        return {
-          id:item.id,
-          title: item.title,
-          img_url: `http://localhost:3333/uploads/${item.image}`,
-        };
-    })
-
-    return res.json({ serializedItems });
-});
-
-routes.post('/points',pointsController.create);
+// METODOS PARA ROTAS
+// index, show, create, update, delete
 
 export default routes;
