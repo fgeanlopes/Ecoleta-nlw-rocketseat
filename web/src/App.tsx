@@ -1,11 +1,15 @@
 import React from 'react';
 import './App.css';
 
-import Header from './Header'
+import Home from './pages/Home'
 
 function App() {
+  // useState;
+  //[valor inicial, funcao para atualizacao do valor inicial]
   return (
-    <Header title="Hello Word" numberSold={999}/>
+    <div>
+      <Home/>
+    </div>
   );
 }
 
