@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 import Logo from '../../assets/logo.svg';
 import {Map, TileLayer, Marker} from 'react-leaflet';
+import {LeafletMouseEvent} from 'leaflet'
 import axios from 'axios';
 import api from '../../services/api';
 
@@ -33,17 +34,36 @@ const CreatePoint = () =>{
     const [seletedCity, setseletedCity] = useState<string>("0");
     const [cities, setCities] = useState<string[]>([]);
 
+    // API MAPS
+    const [initialPosition, setinitialPosition] = useState<[number, number]>([0,0]);
+    const [seletedPositon, SetseletedPositon] = useState<[number, number]>([0,0,]);
+
+    useEffect(()=>{
+      navigator.geolocation.getCurrentPosition(position=>{
+        // const latitude = position.coords.latitude;
+        // const longitude = position.coords.longitude;
+        
+        const {latitude, longitude} = position.coords;
+        setinitialPosition([latitude, longitude]);
+
+      })
+    },[])
+
     useEffect(()=>{
       api.get('items').then(response =>{
         setItems(response.data.serializedItems);
+      }).catch(error => {
+        console.log(error);
       });
     },[]);
 
     useEffect(()=>{
       axios.get<IBGEUFResponse[]>("https://servicodados.ibge.gov.br/api/v1/localidades/estados").then(response => {
-          const ufInitials = response.data.map(uf => uf.sigla);
+          const ufInitials = response.data.map(uf => uf.sigla);       
           setUfs(ufInitials);
-        });
+        }).catch(error => {
+        console.log(error);
+      });
     }, []);
     
     useEffect(() => {
@@ -57,8 +77,30 @@ const CreatePoint = () =>{
         .then((response) => {
           const cityNames = response.data.map(city => city.nome);
           setCities(cityNames);
-        });
+        }).catch(error => {
+        console.log(error);
+      });;
+
     }, [seletedUf]);
+
+    useEffect(()=>{
+      if(seletedCity === '0'){
+        return 
+      }
+      const params = {
+        'access_key': 'c8a0dc4ec6d3d76a0a387783f0e467d4',
+        'query': `${seletedCity}`,
+        'region_code': `${seletedUf}`,
+        'limit': 1,
+      }
+
+      axios.get('http://api.positionstack.com/v1/forward', {params}) .then(response => {
+        setinitialPosition([response.data.data[0].latitude, response.data.data[0].longitude])
+      })
+      .catch(error => {
+        console.log(error);
+      });
+    }, [seletedCity])
 
     function handleSelectUf(event: ChangeEvent<HTMLSelectElement>){
       const uf = event.target.value;
@@ -69,7 +111,11 @@ const CreatePoint = () =>{
       const city = event.target.value;
       setseletedCity(city);
     }
-  
+
+    function handleMapClick(event: LeafletMouseEvent) {
+      SetseletedPositon([event.latlng.lat, event.latlng.lng]);
+    }
+
     return (
       <div id="page-create-point">
         <header>
@@ -109,14 +155,6 @@ const CreatePoint = () =>{
               <span>Selecione o endereço no mapa</span>
             </legend>
 
-            <Map center={[-27.2092052, -49.6401092]} zomm={15}>
-              <TileLayer
-                attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Marker position={[-27.2092052, -49.6401092]} />
-            </Map>
-
             <div className="field-group">
               <div className="field">
                 <label htmlFor="uf">Estado (UF)</label>
@@ -152,6 +190,14 @@ const CreatePoint = () =>{
                 </select>
               </div>
             </div>
+
+            <Map center={initialPosition} zoom={12} onClick={handleMapClick}>
+              <TileLayer
+                attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={seletedPositon} />
+            </Map>
           </fieldset>
 
           <fieldset>
